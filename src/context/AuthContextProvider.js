@@ -9,6 +9,8 @@ const AuthContextProvider = ({ children }) => {
   const [error, setError] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+  const [loader, setLoader] = useState(false);
+
   // ! Register
   const handleRegister = async (formData) => {
     try {
@@ -22,14 +24,44 @@ const AuthContextProvider = ({ children }) => {
   //   ! Login
   const handleLogin = async (formData, email) => {
     try {
+      setLoader(true);
       const { data } = await axios.post(`${API}/account/login/`, formData);
       console.log(data);
       localStorage.setItem("tokens", JSON.stringify(data));
-      localStorage.setItem("email", email);
+      localStorage.setItem("email", JSON.stringify(email));
       setCurrentUser(email);
+      navigate("/");
     } catch (error) {
       setError(Object.values(error.response.data));
+    } finally {
+      setLoader(false);
     }
+  };
+
+  // ! checkAuth
+  const checkAuth = async () => {
+    try {
+      const tokens = JSON.parse(localStorage.getItem("tokens"));
+      const { data } = await axios.post(`${API}/account/token/refresh/`, {
+        refresh: tokens.refresh,
+      });
+      localStorage.setItem(
+        "tokens",
+        JSON.stringify({ access: data, refresh: tokens.refresh })
+      );
+      const email = JSON.parse(localStorage.getItem("email"));
+      setCurrentUser(email);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // ! Logout
+  const handleLogout = () => {
+    localStorage.removeItem("tokens");
+    localStorage.removeItem("email");
+    setCurrentUser(null);
+    navigate("login");
   };
 
   const values = {
@@ -37,7 +69,11 @@ const AuthContextProvider = ({ children }) => {
     error,
     handleLogin,
     currentUser,
+    loader,
+    checkAuth,
+    handleLogout,
   };
+
   return <authContext.Provider value={values}>{children}</authContext.Provider>;
 };
 

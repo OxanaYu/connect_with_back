@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContextProvider";
+import Loader from "../homepage/Loader";
 
 const Login = () => {
-  const { handleLogin, error } = useAuth();
+  const { handleLogin, error, loader } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +17,11 @@ const Login = () => {
       handleLogin(formData, email);
     }
   };
+
+  if (loader) {
+    return <Loader />;
+  }
+
   return (
     <div>
       <h1>Login</h1>
